@@ -15,7 +15,7 @@ import {
   Info,
   ShieldAlert,
 } from "lucide-react";
-import { useSetAccessToken } from "@/lib/TokenProvider";
+import { useAccessToken, useSetAccessToken } from "@/lib/TokenProvider";
 import { useSession } from "@/lib/SessionContext";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -73,17 +73,19 @@ const LT_ROLES = ["ADMIN", "PRESIDENT", "VP", "SECRETARY", "TREASURER"];
 
 export default function LoginPage() {
   const router = useRouter();
+  const accessToken = useAccessToken();
   const setAccessToken = useSetAccessToken();
   const { session, setSession } = useSession();
 
-  // If already authenticated, bounce to the right landing page
+  // Only bounce when a valid in-memory access token is present.
+  // This avoids redirect loops from stale client session metadata after DB reset.
   useEffect(() => {
-    if (session) {
+    if (session && accessToken) {
       router.replace(
         LT_ROLES.includes(session.role) ? "/chapter" : "/chapter/members"
       );
     }
-  }, [session, router]);
+  }, [session, accessToken, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

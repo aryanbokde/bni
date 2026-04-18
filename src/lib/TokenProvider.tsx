@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { clearClientSession } from "./session";
 
 interface TokenContextValue {
   accessToken: string | null;
@@ -69,6 +70,7 @@ export default function TokenProvider({
         const res = await fetch("/api/auth/refresh", { method: "POST" });
         if (!res.ok) {
           setAccessToken(null);
+          clearClientSession();
           return null;
         }
         const data = await res.json();
@@ -77,6 +79,7 @@ export default function TokenProvider({
         return token;
       } catch {
         setAccessToken(null);
+        clearClientSession();
         return null;
       } finally {
         refreshPromiseRef.current = null;

@@ -7,6 +7,7 @@ import {
   useSetAccessToken,
   useRefreshAccessToken,
 } from "@/lib/TokenProvider";
+import { clearClientSession } from "@/lib/session";
 
 export function useApi() {
   const accessToken = useAccessToken();
@@ -45,6 +46,7 @@ export function useApi() {
 
           // Refresh also failed — clear and redirect
           setAccessToken(null);
+          clearClientSession();
           window.location.href = "/login";
         }
 

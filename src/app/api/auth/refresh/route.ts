@@ -13,6 +13,7 @@ export async function POST() {
       { status: 401 }
     );
     response.cookies.delete("refresh_token");
+    response.cookies.delete("bni_session");
     return response;
   }
 
@@ -44,6 +45,7 @@ export async function POST() {
       { status: 401 }
     );
     response.cookies.delete("refresh_token");
+    response.cookies.delete("bni_session");
     return response;
   }
 }

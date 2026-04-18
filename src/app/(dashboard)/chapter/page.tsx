@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import {
   Users,
   Sparkles,
@@ -67,15 +68,31 @@ export default async function DashboardPage() {
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
   const eightWeeksAgo = new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000);
 
-  // Load chapter settings
-  const chapter = await prisma.chapters.findUniqueOrThrow({
-    where: { chapter_id: chapterId },
-    select: {
-      chapter_name: true,
-      rec_expiry_days: true,
-      meeting_day: true,
-    },
-  });
+  // If the database was dropped/reset while stale session cookies still exist,
+  // redirect to login instead of throwing repeated Prisma table-missing errors.
+  let chapter: {
+    chapter_name: string;
+    rec_expiry_days: number;
+    meeting_day: number;
+  };
+  try {
+    chapter = await prisma.chapters.findUniqueOrThrow({
+      where: { chapter_id: chapterId },
+      select: {
+        chapter_name: true,
+        rec_expiry_days: true,
+        meeting_day: true,
+      },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2021"
+    ) {
+      redirect("/login");
+    }
+    throw err;
+  }
 
   const expiryWarningCutoff = new Date(
     Date.now() - (chapter.rec_expiry_days - 7) * 24 * 60 * 60 * 1000
