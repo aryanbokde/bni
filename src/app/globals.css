@@ -1,0 +1,204 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --surface: #FFFFFF;
+  --border: #E2E8F0;
+  --muted: #64748B;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  /* Safe area insets for notched devices */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Components (Button, Input, etc.) handle their own focus rings via Tailwind
+   utilities. No global outline override — that caused double rings and color
+   clashes on the login page and elsewhere. Native browser focus is used for
+   any plain <button>/<a> that isn't styled with a component. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none; /* handled by ring utility on field */
+}
+
+/* Skip-to-content link — visible only on keyboard focus */
+.skip-to-content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: #1B2A4A;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+  font-size: 14px;
+  transform: translateY(-100%);
+  transition: transform 200ms ease;
+  z-index: 9999;
+}
+.skip-to-content:focus {
+  transform: translateY(0);
+  outline: 2px solid #2E75B6;
+  outline-offset: 2px;
+}
+
+/* Prevent iOS input zoom */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+@layer components {
+  /* Legacy classes kept for backward compat — new work should use UI primitives */
+  .card {
+    @apply bg-white rounded-xl shadow-soft p-4 border border-slate-100;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-navy text-white rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-semibold transition-all duration-normal hover:bg-navy-600 active:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 border border-slate-300 text-navy bg-white rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-semibold transition-all duration-normal hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-field {
+    @apply w-full border border-slate-300 rounded-lg px-3.5 py-2.5 min-h-[44px] text-sm bg-white transition-all duration-normal focus:outline-none focus:ring-4 focus:ring-bni-blue/15 focus:border-bni-blue placeholder:text-slate-400;
+  }
+
+  /* Native select styling — consistent custom arrow across browsers */
+  select.input-field,
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem 1rem;
+    padding-right: 2.25rem !important;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+}
+
+@layer utilities {
+  /* Sidebar layout — responsive margin based on collapsed state */
+  @media (min-width: 1024px) {
+    html[data-sidebar="expanded"] .dashboard-main {
+      margin-left: 260px;
+    }
+    html[data-sidebar="collapsed"] .dashboard-main {
+      margin-left: 72px;
+    }
+    /* Default (before JS hydrates) */
+    html:not([data-sidebar]) .dashboard-main {
+      margin-left: 260px;
+    }
+    html[data-sidebar="expanded"] .topbar {
+      left: 260px;
+    }
+    html[data-sidebar="collapsed"] .topbar {
+      left: 72px;
+    }
+    html:not([data-sidebar]) .topbar {
+      left: 260px;
+    }
+  }
+
+  /* Skeleton shimmer */
+  .shimmer {
+    background: linear-gradient(90deg, #E2E8F0 0%, #F1F5F9 50%, #E2E8F0 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-4 focus-visible:ring-bni-blue/25 focus-visible:ring-offset-0;
+  }
+}
+
+/* ═══════ Print Styles ═══════ */
+@media print {
+  /* Hide interactive/navigation elements */
+  aside,
+  nav,
+  header,
+  .dashboard-main + aside,
+  button,
+  [role="dialog"],
+  [data-user-menu],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset page layout */
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  main,
+  .dashboard-main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Cards flatten */
+  .card,
+  [class*="shadow-"] {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  /* Keep tables intact */
+  table {
+    page-break-inside: avoid;
+  }
+
+  /* Hyperlink URLs show */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+}

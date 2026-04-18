@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model chapters {
+  chapter_id              String   @id @default(uuid()) @db.Char(36)
+  chapter_name            String   @db.VarChar(150)
+  meeting_day             Int      @db.TinyInt
+  meeting_start_time      String   @db.VarChar(8)
+  meeting_duration_mins   Int      @default(90)
+  timezone                String   @default("Asia/Kolkata") @db.VarChar(60)
+  quiet_start             String   @default("21:00") @db.VarChar(5)
+  quiet_end               String   @default("07:00") @db.VarChar(5)
+  rsvp_reminder_schedule  Json
+  lookback_days           Int      @default(180)
+  cooldown_days           Int      @default(60)
+  max_recs_per_cycle      Int      @default(3)
+  post_meeting_delay_mins Int      @default(120)
+  rec_expiry_days         Int      @default(30)
+  office_lat              Float?
+  office_lng              Float?
+  location_display_mode   String   @default("AREA_ONLY") @db.VarChar(20)
+  created_at              DateTime @default(now()) @db.DateTime(0)
+  updated_at              DateTime @updatedAt @db.DateTime(0)
+
+  members             members[]
+  shareable_fields    shareable_fields[]
+  recommendations     recommendations[]
+  recommendation_runs recommendation_runs[]
+  member_interactions member_interactions[]
+}
+
+model members {
+  member_id        String   @id @default(uuid()) @db.Char(36)
+  chapter_id       String   @db.Char(36)
+  full_name        String   @db.VarChar(150)
+  mobile_enc       Bytes
+  mobile_hash      String   @db.Char(64)
+  whatsapp_enc     Bytes
+  whatsapp_hash    String   @db.Char(64)
+  email_enc        Bytes
+  email_hash       String   @db.Char(64)
+  password_hash          String?   @db.VarChar(60)
+  failed_login_attempts  Int       @default(0)
+  locked_until           DateTime? @db.DateTime(0)
+  biz_category           String    @db.VarChar(100)
+  one_line_summary String   @db.VarChar(250)
+  intro_text       String?  @db.VarChar(400)
+  office_address   String   @db.Text
+  latitude         Float?
+  longitude        Float?
+  geocode_status   String   @default("PENDING") @db.VarChar(20)
+  status           String   @default("ACTIVE") @db.VarChar(20)
+  comm_eligible    Boolean  @default(true)
+  rec_active       Boolean  @default(true)
+  chapter_role     String   @default("MEMBER") @db.VarChar(30)
+  joining_date     DateTime @db.Date
+  created_at       DateTime @default(now()) @db.DateTime(0)
+  updated_at       DateTime @updatedAt @db.DateTime(0)
+  created_by       String?  @db.Char(36)
+  updated_by       String?  @db.Char(36)
+
+  chapter chapters @relation(fields: [chapter_id], references: [chapter_id])
+
+  @@unique([chapter_id, mobile_hash])
+  @@unique([chapter_id, whatsapp_hash])
+  @@unique([chapter_id, email_hash])
+  @@index([chapter_id, status])
+  @@index([chapter_id, chapter_role])
+}
+
+model shareable_fields {
+  chapter_id   String   @db.Char(36)
+  field_name   String   @db.VarChar(50)
+  is_shareable Boolean  @default(false)
+  updated_at   DateTime @updatedAt @db.DateTime(0)
+  updated_by   String?  @db.Char(36)
+
+  chapter chapters @relation(fields: [chapter_id], references: [chapter_id])
+
+  @@id([chapter_id, field_name])
+}
+
+model member_interactions {
+  interaction_id   String   @id @default(uuid()) @db.Char(36)
+  chapter_id       String   @db.Char(36)
+  member_a_id      String   @db.Char(36)
+  member_b_id      String   @db.Char(36)
+  interaction_date DateTime @db.Date
+  source           String   @db.VarChar(30)
+  confirmed_by     String?  @db.Char(36)
+  notes            String?  @db.Text
+  rec_id           String?  @db.Char(36)
+  created_at       DateTime @default(now()) @db.DateTime(0)
+
+  chapter chapters @relation(fields: [chapter_id], references: [chapter_id])
+
+  @@unique([member_a_id, member_b_id, interaction_date])
+  @@index([member_a_id, interaction_date])
+  @@index([member_b_id, interaction_date])
+  @@index([chapter_id, interaction_date])
+}
+
+model recommendations {
+  rec_id          String    @id @default(uuid()) @db.Char(36)
+  chapter_id      String    @db.Char(36)
+  member_a_id     String    @db.Char(36)
+  member_b_id     String    @db.Char(36)
+  run_id          String?   @db.Char(36)
+  status          String    @default("QUEUED") @db.VarChar(20)
+  sent_at         DateTime?
+  completed_at    DateTime?
+  expired_at      DateTime?
+  excluded_at     DateTime?
+  excluded_by     String?   @db.Char(36)
+  excluded_reason String?   @db.Text
+  wa_msg_id_a     String?   @db.VarChar(100)
+  wa_msg_id_b     String?   @db.VarChar(100)
+  send_attempts   Int       @default(0)
+  created_at      DateTime  @default(now()) @db.DateTime(0)
+  updated_at      DateTime  @updatedAt @db.DateTime(0)
+
+  chapter chapters @relation(fields: [chapter_id], references: [chapter_id])
+
+  @@index([chapter_id, status])
+  @@index([member_a_id, status])
+  @@index([member_b_id, status])
+}
+
+model recommendation_runs {
+  run_id          String    @id @default(uuid()) @db.Char(36)
+  chapter_id      String    @db.Char(36)
+  trigger_type    String    @db.VarChar(20)
+  meeting_id      String?   @db.Char(36)
+  started_at      DateTime  @default(now()) @db.DateTime(0)
+  completed_at    DateTime?
+  status          String    @default("RUNNING") @db.VarChar(20)
+  pairs_evaluated Int       @default(0)
+  pairs_sent      Int       @default(0)
+  pairs_skipped   Int       @default(0)
+  error_detail    String?   @db.Text
+
+  chapter chapters @relation(fields: [chapter_id], references: [chapter_id])
+}
+
+model audit_logs {
+  log_id      BigInt   @id @default(autoincrement())
+  entity_type String   @db.VarChar(50)
+  entity_id   String   @db.Char(36)
+  operation   String   @db.VarChar(20)
+  field_name  String?  @db.VarChar(80)
+  old_value   String?  @db.Text
+  new_value   String?  @db.Text
+  actor_id    String   @db.Char(36)
+  actor_role  String   @db.VarChar(30)
+  source      String   @db.VarChar(20)
+  occurred_at DateTime @default(now()) @db.DateTime(0)
+
+  @@index([entity_type, entity_id])
+  @@index([actor_id])
+}
+
+model refresh_tokens {
+  id         String   @id @default(uuid()) @db.Char(36)
+  member_id  String   @db.Char(36)
+  token_hash String   @db.Char(64)
+  expires_at DateTime @db.DateTime(0)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  is_revoked Boolean  @default(false)
+
+  @@index([token_hash])
+  @@index([member_id])
+}
